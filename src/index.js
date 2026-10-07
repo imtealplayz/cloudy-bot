@@ -120,6 +120,17 @@ function botMove(board) {
   return pick(empty);
 }
 
+function permissionLabel(permission) {
+  const labels = {
+    [PermissionFlagsBits.ManageGuild]: 'ManageGuild',
+    [PermissionFlagsBits.ManageMessages]: 'ManageMessages',
+    [PermissionFlagsBits.ModerateMembers]: 'ModerateMembers',
+    [PermissionFlagsBits.KickMembers]: 'KickMembers',
+    [PermissionFlagsBits.BanMembers]: 'BanMembers'
+  };
+  return labels[permission] || String(permission);
+}
+
 function formatStats(stats) {
   const entries = Object.entries(stats || {})
     .sort((a, b) => b[1] - a[1])
@@ -161,7 +172,7 @@ async function moderateInteraction(interaction, targetUser, requiredPermission) 
 
   if (!hasPermission(moderator, requiredPermission)) {
     await interaction.reply(
-      ui.error('Cloudy Moderation', 'You need ' + ui.inline(requiredPermission.toString()) + ' to use this action.')
+      ui.error('Cloudy Moderation', 'You need ' + ui.inline(permissionLabel(requiredPermission)) + ' to use this action.')
     );
     return null;
   }
@@ -376,6 +387,10 @@ async function executePrefix(message) {
   }
 
   if (command === 'warnings') {
+    if (!hasPermission(message.member, PermissionFlagsBits.ModerateMembers)) {
+      await message.reply(ui.error('Cloudy Moderation', 'You need ' + ui.inline('ModerateMembers') + '.'));
+      return;
+    }
     if (!target) {
       await message.reply(ui.error('Cloudy Moderation', 'Mention a member.'));
       return;
@@ -389,6 +404,10 @@ async function executePrefix(message) {
   }
 
   if (command === 'unwarn') {
+    if (!hasPermission(message.member, PermissionFlagsBits.ModerateMembers)) {
+      await message.reply(ui.error('Cloudy Moderation', 'You need ' + ui.inline('ModerateMembers') + '.'));
+      return;
+    }
     const warningId = parts.shift();
     if (!target || !warningId) {
       await message.reply(ui.error('Cloudy Moderation', 'Use ' + ui.inline(prefix + 'unwarn <warning-id> @user') + '.'));
@@ -469,6 +488,10 @@ async function executePrefix(message) {
   }
 
   if (command === 'history') {
+    if (!hasPermission(message.member, PermissionFlagsBits.ModerateMembers)) {
+      await message.reply(ui.error('Cloudy Moderation', 'You need ' + ui.inline('ModerateMembers') + '.'));
+      return;
+    }
     if (!target) {
       await message.reply(ui.error('Cloudy Moderation', 'Mention a member.'));
       return;
@@ -485,6 +508,10 @@ async function executePrefix(message) {
   }
 
   if (command === 'stats') {
+    if (!hasPermission(message.member, PermissionFlagsBits.ModerateMembers)) {
+      await message.reply(ui.error('Cloudy Moderation', 'You need ' + ui.inline('ModerateMembers') + '.'));
+      return;
+    }
     const who = target ? target.id : message.author.id;
     const stats = settings.stats[who] || {};
     await message.reply(ui.info('Cloudy Moderation Stats', 'Moderator: <@' + who + '>\n\n' + formatStats(stats)));
@@ -656,6 +683,14 @@ async function handleSlash(interaction) {
       const category = interaction.options.getChannel('category');
       const supportRole = interaction.options.getRole('support_role');
 
+      if (settings.ticket.panelChannelId && settings.ticket.panelMessageId) {
+        const oldChannel = interaction.guild.channels.cache.get(settings.ticket.panelChannelId);
+        if (oldChannel && oldChannel.isTextBased()) {
+          const oldPanel = await oldChannel.messages.fetch(settings.ticket.panelMessageId).catch(() => null);
+          if (oldPanel) await oldPanel.delete().catch(() => {});
+        }
+      }
+
       const panel = await channel.send(ui.ticketPanel());
 
       store.updateGuild(interaction.guild.id, (guild) => {
@@ -667,6 +702,14 @@ async function handleSlash(interaction) {
 
       await interaction.reply(ui.success('Cloudy Tickets', 'Ticket panel created in ' + channel.toString() + '.'));
     } else {
+      if (settings.ticket.panelChannelId && settings.ticket.panelMessageId) {
+        const oldChannel = interaction.guild.channels.cache.get(settings.ticket.panelChannelId);
+        if (oldChannel && oldChannel.isTextBased()) {
+          const oldPanel = await oldChannel.messages.fetch(settings.ticket.panelMessageId).catch(() => null);
+          if (oldPanel) await oldPanel.delete().catch(() => {});
+        }
+      }
+
       store.updateGuild(interaction.guild.id, (guild) => {
         guild.ticket.panelChannelId = null;
         guild.ticket.panelMessageId = null;
