@@ -586,13 +586,13 @@ async function executePrefixModeration(message, target, action, durationMs, reas
 
 async function executeGamePrefix(message, command) {
   if (command === 'rps') {
-    await message.reply(ui.rpsCard('Choose your move.'));
+    await message.reply(ui.rpsCard('Choose your move.', message.author.id));
     return;
   }
 
   if (command === 'truth' || command === 'dare') {
     const prompt = pick(command === 'truth' ? truthPrompts : darePrompts);
-    await message.reply(ui.truthDareCard(prompt));
+    await message.reply(ui.truthDareCard(prompt, message.author.id));
     return;
   }
 
@@ -988,12 +988,12 @@ async function handleGameSlash(interaction) {
   const sub = interaction.options.getSubcommand();
 
   if (sub === 'truthordare') {
-    await interaction.reply(ui.truthDareCard('Choose ' + ui.inline('Truth') + ' or ' + ui.inline('Dare') + '.'));
+    await interaction.reply(ui.truthDareCard('Choose ' + ui.inline('Truth') + ' or ' + ui.inline('Dare') + '.', interaction.user.id));
     return;
   }
 
   if (sub === 'rps') {
-    await interaction.reply(ui.rpsCard('Choose your move.'));
+    await interaction.reply(ui.rpsCard('Choose your move.', interaction.user.id));
     return;
   }
 
@@ -1126,14 +1126,22 @@ async function handleButton(interaction) {
   }
 
   if (interaction.customId.startsWith('cloudy:td:')) {
-    const type = interaction.customId.split(':')[2];
+    const [, , ownerId, type] = interaction.customId.split(':');
+    if (ownerId !== interaction.user.id) {
+      await interaction.reply(ui.error('Truth or Dare', 'This game belongs to another player.'));
+      return;
+    }
     const prompt = pick(type === 'truth' ? truthPrompts : darePrompts);
-    await interaction.update(ui.truthDareCard(prompt));
+    await interaction.update(ui.truthDareCard(prompt, ownerId));
     return;
   }
 
   if (interaction.customId.startsWith('cloudy:rps:')) {
-    const player = interaction.customId.split(':')[2];
+    const [, , ownerId, player] = interaction.customId.split(':');
+    if (ownerId !== interaction.user.id) {
+      await interaction.reply(ui.error('Rock Paper Scissors', 'This game belongs to another player.'));
+      return;
+    }
     const computer = pick(rpsChoices);
     const result =
       player === computer
@@ -1142,7 +1150,7 @@ async function handleButton(interaction) {
           ? 'You chose ' + ui.inline(player) + '. Cloudy chose ' + ui.inline(computer) + '.\nResult: ' + ui.inline('you win')
           : 'You chose ' + ui.inline(player) + '. Cloudy chose ' + ui.inline(computer) + '.\nResult: ' + ui.inline('Cloudy wins');
 
-    await interaction.update(ui.rpsCard(result));
+    await interaction.update(ui.rpsCard(result, ownerId));
     return;
   }
 
