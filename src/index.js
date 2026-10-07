@@ -301,8 +301,20 @@ function helpText(prefix) {
   ].join('\n');
 }
 
-function targetFromMessage(message) {
-  return message.mentions.members.first() || null;
+function targetFromMessage(message, parts) {
+  const target = message.mentions.members.first() || null;
+  if (!target) return null;
+
+  const mentionTokens = ['<@' + target.id + '>', '<@!' + target.id + '>'];
+  for (const token of mentionTokens) {
+    const index = parts.indexOf(token);
+    if (index !== -1) {
+      parts.splice(index, 1);
+      break;
+    }
+  }
+
+  return target;
 }
 
 async function executePrefix(message) {
@@ -331,8 +343,8 @@ async function executePrefix(message) {
     return;
   }
 
-  const target = targetFromMessage(message);
-  const reason = parts.join(' ').replace(/^\s+/, '') || 'No reason provided.';
+  const target = targetFromMessage(message, parts);
+  let reason = parts.join(' ').replace(/^\s+/, '') || 'No reason provided.';
 
   if (command === 'warn') {
     if (!hasPermission(message.member, PermissionFlagsBits.ModerateMembers)) {
@@ -410,7 +422,8 @@ async function executePrefix(message) {
 
   if (command === 'tempban') {
     const durationText = target ? parts.shift() : null;
-    const duration = parseDuration(durationText, 1209600000);
+    const duration = parseDuration(durationText, 2592000000);
+    reason = parts.join(' ').replace(/^\s+/, '') || 'No reason provided.';
     await executePrefixModeration(message, target, 'tempban', duration, reason);
     return;
   }
@@ -418,6 +431,7 @@ async function executePrefix(message) {
   if (command === 'timeout' || command === 'mute') {
     const durationText = target ? parts.shift() : null;
     const duration = parseDuration(durationText, 2419200000);
+    reason = parts.join(' ').replace(/^\s+/, '') || 'No reason provided.';
     await executePrefixModeration(message, target, 'timeout', duration, reason);
     return;
   }
@@ -432,8 +446,18 @@ async function executePrefix(message) {
       await message.reply(ui.error('Cloudy Moderation', 'Amount must be between 1 and 100.'));
       return;
     }
-    const deleted = await message.channel.bulkDelete(amount, true).catch(() => null);
-    const count = deleted?.size || 0;
+
+    let count = 0;
+    if (amount === 1) {
+      const latest = await message.channel.messages.fetch({ limit: 1 }).catch(() => null);
+      const latestMessage = latest?.first();
+      if (latestMessage) {
+        await latestMessage.delete().then(() => { count = 1; }).catch(() => {});
+      }
+    } else {
+      const deleted = await message.channel.bulkDelete(amount, true).catch(() => null);
+      count = deleted?.size || 0;
+    }
     store.addHistory(message.guild.id, {
       type: 'purge',
       targetId: message.guild.id,
