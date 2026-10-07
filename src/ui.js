@@ -126,7 +126,7 @@ function rpsCard(resultText) {
 }
 
 function tttCard(game) {
-  const labels = game.board.map((cell) => cell || ' ');
+  const labels = game.board.map((cell, index) => cell || String(index + 1));
   const rows = [
     [0, 1, 2],
     [3, 4, 5],
