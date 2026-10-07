@@ -287,9 +287,9 @@ function helpText(prefix) {
     '- ' + ui.inline(prefix + 'history') + ', ' + ui.inline(prefix + 'stats'),
     '',
     'Games',
-    '- ' + ui.inline('/games truthordare') + ',
-    '- ' + ui.inline('/games rps') + ',
-    '- ' + ui.inline('/games tictactoe') + '
+    '- ' + ui.inline('/games truthordare'),
+    '- ' + ui.inline('/games rps'),
+    '- ' + ui.inline('/games tictactoe')
   ].join('\n');
 }
 
