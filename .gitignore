@@ -1,0 +1,6 @@
+node_modules/
+.env
+data/cloudy.json
+data/cloudy.json.tmp
+npm-debug.log*
+.DS_Store
