@@ -56,7 +56,8 @@ function card(title, body, buttons = [], options = {}) {
     flags: options.ephemeral
       ? MessageFlags.Ephemeral | MessageFlags.IsComponentsV2
       : MessageFlags.IsComponentsV2,
-    components: [container]
+    components: [container],
+    allowedMentions: { parse: [] }
   };
 }
 
@@ -68,7 +69,8 @@ function multiRowCard(title, body, rows, options = {}) {
     flags: options.ephemeral
       ? MessageFlags.Ephemeral | MessageFlags.IsComponentsV2
       : MessageFlags.IsComponentsV2,
-    components: [container]
+    components: [container],
+    allowedMentions: { parse: [] }
   };
 }
 
