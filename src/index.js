@@ -184,9 +184,17 @@ async function moderateInteraction(interaction, targetUser, requiredPermission) 
 async function configureNativeAutoMod(guild, enabled) {
   const settings = store.guild(guild.id);
 
+  await guild.autoModerationRules.fetch().catch(() => {});
+
   for (const ruleId of settings.automod.ruleIds || []) {
     const rule = guild.autoModerationRules.cache.get(ruleId);
     if (rule) await rule.delete('Cloudy AutoMod reset').catch(() => {});
+  }
+
+  for (const rule of guild.autoModerationRules.cache.values()) {
+    if (rule.name.startsWith('Cloudy AutoMod ')) {
+      await rule.delete('Cloudy AutoMod cleanup').catch(() => {});
+    }
   }
 
   settings.automod.ruleIds = [];
@@ -846,8 +854,17 @@ async function handleModerationSlash(interaction) {
     const amount = interaction.options.getInteger('amount', true);
     await interaction.deferReply();
 
-    const deleted = await interaction.channel.bulkDelete(amount, true).catch(() => null);
-    const count = deleted?.size || 0;
+    let count = 0;
+    if (amount === 1) {
+      const latest = await interaction.channel.messages.fetch({ limit: 1 }).catch(() => null);
+      const message = latest?.first();
+      if (message) {
+        await message.delete().then(() => { count = 1; }).catch(() => {});
+      }
+    } else {
+      const deleted = await interaction.channel.bulkDelete(amount, true).catch(() => null);
+      count = deleted?.size || 0;
+    }
 
     store.addHistory(interaction.guild.id, {
       type: 'purge',
