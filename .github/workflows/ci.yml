@@ -1,0 +1,27 @@
+name: Cloudy CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Syntax check
+        run: npm run check
+
+      - name: Load command definitions
+        run: node -e "const commands = require('./src/commands'); if (!commands.length) process.exit(1); console.log('Loaded ' + commands.length + ' command roots.');"
