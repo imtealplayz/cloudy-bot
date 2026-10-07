@@ -102,25 +102,25 @@ function ticketCard(channelName, ownerMention) {
   );
 }
 
-function truthDareCard(prompt) {
+function truthDareCard(prompt, ownerId) {
   return card(
     'Truth or Dare',
     'Your prompt:\n\n' + prompt,
     [
-      button('Truth', 'cloudy:td:truth', ButtonStyle.Primary),
-      button('Dare', 'cloudy:td:dare', ButtonStyle.Secondary)
+      button('Truth', 'cloudy:td:' + ownerId + ':truth', ButtonStyle.Primary),
+      button('Dare', 'cloudy:td:' + ownerId + ':dare', ButtonStyle.Secondary)
     ]
   );
 }
 
-function rpsCard(resultText) {
+function rpsCard(resultText, ownerId) {
   return card(
     'Rock Paper Scissors',
     resultText + '\n\nChoose your move.',
     [
-      button('Rock', 'cloudy:rps:rock', ButtonStyle.Primary),
-      button('Paper', 'cloudy:rps:paper', ButtonStyle.Secondary),
-      button('Scissors', 'cloudy:rps:scissors', ButtonStyle.Secondary)
+      button('Rock', 'cloudy:rps:' + ownerId + ':rock', ButtonStyle.Primary),
+      button('Paper', 'cloudy:rps:' + ownerId + ':paper', ButtonStyle.Secondary),
+      button('Scissors', 'cloudy:rps:' + ownerId + ':scissors', ButtonStyle.Secondary)
     ]
   );
 }
