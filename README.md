@@ -54,7 +54,7 @@ Cloudy uses Discord Components V2 containers for its card UI. Discord does not a
 
 ## Requirements
 
-- Node.js `18.18.0` or newer.
+- Node.js `24.17.0` or newer.
 - A Discord application with a bot user.
 - A server where you can configure roles, channels, and bot permissions.
 - The `Message Content Intent`.
