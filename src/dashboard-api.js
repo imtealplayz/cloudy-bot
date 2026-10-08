@@ -240,7 +240,8 @@ function startDashboardApi(client, actions) {
           return;
         }
 
-        store.replaceGuild(guildId, merged);
+        store.data.guilds[guildId] = merged;
+        store.flush();
         json(response, 200, { ok: true, settings: safeGuildData(guildId) });
         return;
       }
