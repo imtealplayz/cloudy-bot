@@ -240,9 +240,42 @@ function startDashboardApi(client, actions) {
           return;
         }
 
+        if (body.automod?.enabled !== undefined && Boolean(body.automod.enabled) !== Boolean(existing.automod?.enabled)) {
+          await actions.configureNativeAutoMod(guild, Boolean(body.automod.enabled));
+        }
+
         store.data.guilds[guildId] = merged;
         store.flush();
         json(response, 200, { ok: true, settings: safeGuildData(guildId) });
+        return;
+      }
+
+      if (request.method === 'POST' && parts.length === 3) {
+        const body = await readJson(request);
+
+        if (body.action === 'ticket_setup') {
+          if (!body.channelId) {
+            json(response, 400, { error: 'A ticket panel channel is required.' });
+            return;
+          }
+
+          await actions.setupTicketPanel(guild, {
+            channelId: body.channelId,
+            categoryId: body.categoryId || null,
+            supportRoleId: body.supportRoleId || null
+          });
+
+          json(response, 200, { ok: true, settings: safeGuildData(guildId) });
+          return;
+        }
+
+        if (body.action === 'ticket_disable') {
+          await actions.disableTicketPanel(guild);
+          json(response, 200, { ok: true, settings: safeGuildData(guildId) });
+          return;
+        }
+
+        json(response, 400, { error: 'Unknown dashboard action.' });
         return;
       }
 
