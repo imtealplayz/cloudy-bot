@@ -1,6 +1,6 @@
 {
   "name": "cloudy-bot",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Cloudy — a modular Discord moderation, security, ticket and games bot.",
   "main": "src/index.js",
   "type": "commonjs",
@@ -11,7 +11,7 @@
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
     "deploy": "node deploy-commands.js",
-    "check": "node --check src/index.js && node --check src/config.js && node --check src/store.js && node --check src/ui.js && node --check src/commands.js && node --check deploy-commands.js"
+    "check": "node --check src/index.js && node --check src/config.js && node --check src/store.js && node --check src/ui.js && node --check src/commands.js && node --check src/dashboard-api.js && node --check deploy-commands.js"
   },
   "dependencies": {
     "discord.js": "14.27.0",
