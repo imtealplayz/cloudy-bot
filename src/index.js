@@ -14,6 +14,7 @@ const config = require('./config');
 const store = require('./store');
 const commands = require('./commands');
 const ui = require('./ui');
+const { startDashboardApi } = require('./dashboard-api');
 const {
   parseDuration,
   formatDuration,
@@ -1192,6 +1193,8 @@ async function handleButton(interaction) {
     await interaction.update(ui.tttCard(game));
   }
 }
+
+startDashboardApi(client, { configureNativeAutoMod });
 
 client.once('ready', async () => {
   client.user.setPresence({
