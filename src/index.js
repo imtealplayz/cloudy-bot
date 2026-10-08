@@ -612,6 +612,53 @@ async function executeGamePrefix(message, command) {
   }
 }
 
+async function setupTicketPanel(guild, { channelId, categoryId = null, supportRoleId = null }) {
+  const channel = guild.channels.cache.get(channelId);
+  if (!channel || !channel.isTextBased()) {
+    throw new Error('Ticket panel channel was not found or is not a text channel.');
+  }
+
+  const settings = store.guild(guild.id);
+
+  if (settings.ticket.panelChannelId && settings.ticket.panelMessageId) {
+    const oldChannel = guild.channels.cache.get(settings.ticket.panelChannelId);
+    if (oldChannel && oldChannel.isTextBased()) {
+      const oldPanel = await oldChannel.messages.fetch(settings.ticket.panelMessageId).catch(() => null);
+      if (oldPanel) await oldPanel.delete().catch(() => {});
+    }
+  }
+
+  const panel = await channel.send(ui.ticketPanel());
+
+  store.updateGuild(guild.id, (current) => {
+    current.ticket.panelChannelId = channel.id;
+    current.ticket.panelMessageId = panel.id;
+    current.ticket.categoryId = categoryId || null;
+    current.ticket.supportRoleId = supportRoleId || null;
+  });
+
+  return panel;
+}
+
+async function disableTicketPanel(guild) {
+  const settings = store.guild(guild.id);
+
+  if (settings.ticket.panelChannelId && settings.ticket.panelMessageId) {
+    const oldChannel = guild.channels.cache.get(settings.ticket.panelChannelId);
+    if (oldChannel && oldChannel.isTextBased()) {
+      const oldPanel = await oldChannel.messages.fetch(settings.ticket.panelMessageId).catch(() => null);
+      if (oldPanel) await oldPanel.delete().catch(() => {});
+    }
+  }
+
+  store.updateGuild(guild.id, (current) => {
+    current.ticket.panelChannelId = null;
+    current.ticket.panelMessageId = null;
+    current.ticket.categoryId = null;
+    current.ticket.supportRoleId = null;
+  });
+}
+
 async function handleSlash(interaction) {
   const { commandName } = interaction;
 
@@ -685,39 +732,15 @@ async function handleSlash(interaction) {
       const category = interaction.options.getChannel('category');
       const supportRole = interaction.options.getRole('support_role');
 
-      if (settings.ticket.panelChannelId && settings.ticket.panelMessageId) {
-        const oldChannel = interaction.guild.channels.cache.get(settings.ticket.panelChannelId);
-        if (oldChannel && oldChannel.isTextBased()) {
-          const oldPanel = await oldChannel.messages.fetch(settings.ticket.panelMessageId).catch(() => null);
-          if (oldPanel) await oldPanel.delete().catch(() => {});
-        }
-      }
-
-      const panel = await channel.send(ui.ticketPanel());
-
-      store.updateGuild(interaction.guild.id, (guild) => {
-        guild.ticket.panelChannelId = channel.id;
-        guild.ticket.panelMessageId = panel.id;
-        guild.ticket.categoryId = category?.id || null;
-        guild.ticket.supportRoleId = supportRole?.id || null;
+      await setupTicketPanel(interaction.guild, {
+        channelId: channel.id,
+        categoryId: category?.id || null,
+        supportRoleId: supportRole?.id || null
       });
 
       await interaction.reply(ui.success('Cloudy Tickets', 'Ticket panel created in ' + channel.toString() + '.'));
     } else {
-      if (settings.ticket.panelChannelId && settings.ticket.panelMessageId) {
-        const oldChannel = interaction.guild.channels.cache.get(settings.ticket.panelChannelId);
-        if (oldChannel && oldChannel.isTextBased()) {
-          const oldPanel = await oldChannel.messages.fetch(settings.ticket.panelMessageId).catch(() => null);
-          if (oldPanel) await oldPanel.delete().catch(() => {});
-        }
-      }
-
-      store.updateGuild(interaction.guild.id, (guild) => {
-        guild.ticket.panelChannelId = null;
-        guild.ticket.panelMessageId = null;
-        guild.ticket.categoryId = null;
-        guild.ticket.supportRoleId = null;
-      });
+      await disableTicketPanel(interaction.guild);
       await interaction.reply(ui.success('Cloudy Tickets', 'Ticket configuration is disabled.'));
     }
     return;
@@ -1194,7 +1217,7 @@ async function handleButton(interaction) {
   }
 }
 
-startDashboardApi(client, { configureNativeAutoMod });
+startDashboardApi(client, { configureNativeAutoMod, setupTicketPanel, disableTicketPanel });
 
 client.once('ready', async () => {
   client.user.setPresence({
