@@ -555,3 +555,38 @@ When adding new Cloudy features:
 - Do not add decorative emojis to bot output.
 - Use inline code formatting for values users need to identify or copy.
 - Keep configuration persistent and restart-safe where practical.
+
+## Cloudy Dashboard API
+
+Cloudy exposes a small authenticated HTTP API for the Vercel dashboard in imtealplayz/cloudy-dashboard.
+
+Add these environment variables to the bot host:
+
+    DASHBOARD_API_KEY=long_random_shared_secret
+    DASHBOARD_ORIGIN=https://YOUR-DOMAIN.vercel.app
+
+The API binds to DASHBOARD_API_PORT when that variable is set. Otherwise it uses the hosting provider's PORT, which is the recommended setup for Railway and similar hosts.
+
+Do not put DISCORD_TOKEN or DASHBOARD_API_KEY in the dashboard frontend.
+
+The dashboard uses Discord OAuth2 to confirm the signed-in user has Manage Server or Administrator, then its server-side API routes call Cloudy's dashboard API with the shared key.
+
+The Cloudy dashboard API reads and writes the existing data/cloudy.json store, so no separate database is required for the dashboard itself.
+
+### Vercel connection variables
+
+In the dashboard project, configure:
+
+    DISCORD_CLIENT_ID=your_application_client_id
+    DISCORD_CLIENT_SECRET=your_application_client_secret
+    DISCORD_REDIRECT_URI=https://YOUR-DOMAIN.vercel.app/api/auth/callback
+    SESSION_SECRET=long_random_secret_at_least_32_characters
+    CLOUDY_BOT_API_URL=https://YOUR-CLOUDY-BOT-HOST
+    CLOUDY_BOT_API_KEY=the_same_value_as_DASHBOARD_API_KEY
+
+The Discord OAuth callback URL must be added to the application's OAuth2 redirect URI list.
+
+### Persistent storage
+
+Cloudy still stores configuration and moderation records in JSON. The bot host must provide persistent disk storage for those records to survive restarts. The dashboard does not change that requirement.
+
